@@ -26,9 +26,11 @@ WHAT THIS PROGRAM DOES (USING THE BOTO3 LIBRARY)
 
 import configparser
 import json
+import time
 import boto3
 from botocore.exceptions import ClientError
 import ingress_rule
+import utilities
 
 config = configparser.ConfigParser()
 config.read_file(open('dwh.cfg'))
@@ -48,7 +50,7 @@ DWH_WORKGROUP_NAME = config.get("DWH", "DWH_WORKGROUP_NAME")
 
 def setup_namespace(redshift_serverless: boto3.session.Session.resource,
                     role_arn: str) -> None:
-    """ Create Namespace if it does not exist """
+    """ Create Namespace (if it does not exist) for/as-part-of the new Redshift """
     namespace_exists = False
     response = redshift_serverless.list_namespaces()
     for namespace in response['namespaces']:
@@ -71,7 +73,7 @@ def setup_namespace(redshift_serverless: boto3.session.Session.resource,
         )
 
         # print(response)
-        print('Created namespace', DWH_NAMESPACE_NAME,
+        print('Initiated creation of namespace', DWH_NAMESPACE_NAME,
               'with default database settings from config file.')
 
     # response = redshift_serverless.list_namespaces()
@@ -80,6 +82,7 @@ def setup_namespace(redshift_serverless: boto3.session.Session.resource,
 
 
 def setup_workgroup(redshift_serverless: boto3.session.Session.resource) -> None:
+    """ Create workgroup (if it does not exist) for/as-part-of the new Redshift """
 
     workgroup_exists = False
     response = redshift_serverless.list_workgroups()
@@ -103,11 +106,12 @@ def setup_workgroup(redshift_serverless: boto3.session.Session.resource) -> None
         )
 
         # print(response)
-        print('Created workgroup', DWH_WORKGROUP_NAME,
+        print('Initiated creation of workgroup', DWH_WORKGROUP_NAME,
               'for namespace', DWH_NAMESPACE_NAME)
 
 
 def get_role_arn(iam_client, role_name):
+    """ retrieve and return the ARN of the role we have given permissions to """
     role_arn = iam_client.get_role(RoleName=role_name)['Role']['Arn']
     return role_arn
 
@@ -138,7 +142,7 @@ def setup_role_for_redshit_to_access_s3():
 
         print("Adding an S3 Read Policy to the IAM Role", DWH_IAM_ROLE_NAME)
 
-        iam_client.attach_role_policy(
+        status = iam_client.attach_role_policy(
             RoleName=DWH_IAM_ROLE_NAME,
             PolicyArn="arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
         )['ResponseMetadata']['HTTPStatusCode']
@@ -151,10 +155,68 @@ def setup_role_for_redshit_to_access_s3():
 
     return get_role_arn(iam_client, DWH_IAM_ROLE_NAME)
 
-    ##############################################################
+
+def wait_until_workgroup_ready(redshift_serverless_client):
+    """ Monitors the status of the new workgroup, 
+    in a loop, until it is ready for use"""
+
+    while True:
+        start_time = time.time()
+
+        response = redshift_serverless_client.get_workgroup(
+            workgroupName=DWH_WORKGROUP_NAME)
+        status = response['workgroup']['status']
+
+        if status == 'AVAILABLE':
+
+            duration_string = utilities.get_duration_string(start_time)
+            print(
+                f"Workgroup {DWH_WORKGROUP_NAME} created. " +
+                f"It took {duration_string}. It is now ready for use.")
+            break
+        elif status == 'FAILED':
+            print(f"Workgroup {DWH_WORKGROUP_NAME} creation failed.")
+            break
+        else:
+            duration_string = utilities.get_duration_string(start_time)
+            print(
+                f"Workgroup {DWH_WORKGROUP_NAME} creation in-progress. " +
+                f"It has been running for {duration_string}.")
+            time.sleep(10)  # Wait for 10 seconds before checking again
+
+
+def wait_until_namespace_ready(redshift_serverless_client):
+    """ Monitors the status of the new namespace, 
+    in a loop, until it is ready for use"""
+
+    start_time = time.time()
+
+    while True:
+
+        response = redshift_serverless_client.get_namespace(
+            namespaceName=DWH_NAMESPACE_NAME)
+        status = response['namespace']['status']
+
+        if status == 'AVAILABLE':
+
+            duration_string = utilities.get_duration_string(start_time)
+            print(
+                f"Namespace {DWH_NAMESPACE_NAME} created. " +
+                f"It took {duration_string}. It is now ready for use.")
+            break
+        elif status == 'FAILED':
+            print(f"Namespace {DWH_NAMESPACE_NAME} creation failed.")
+            break
+        else:
+            duration_string = utilities.get_duration_string(start_time)
+            print(
+                f"Namespace {DWH_NAMESPACE_NAME} creation in-progress. " +
+                f"It has been running for {duration_string}.")
+            time.sleep(10)  # Wait for 10 seconds before checking again
 
 
 def main():
+    """ This method controls the IAC creation processes """
 
     role_arn = setup_role_for_redshit_to_access_s3()
 
@@ -169,6 +231,10 @@ def main():
     setup_workgroup(redshift_serverless_client)
 
     ingress_rule.setup_ingress_rule()
+
+    wait_until_namespace_ready(redshift_serverless_client)
+
+    wait_until_workgroup_ready(redshift_serverless_client)
 
 
 if __name__ == "__main__":

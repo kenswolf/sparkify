@@ -1,9 +1,12 @@
+""" This ETL code reads from S3 and populates staging 
+and fact-dimension tables in a database tables associated 
+with a Serverless Redshift """
+
 import configparser
-import requests
 import psycopg2
 import boto3
 from sql_queries import copy_table_queries, insert_table_queries
-import ingress_rule
+import utilities
 
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
@@ -21,21 +24,8 @@ DWH_DB_USER = config.get("DWH", "DWH_DB_USER")
 DWH_DB_PASSWORD = config.get("DWH", "DWH_DB_PASSWORD")
 
 
-def get_host():
-
-    redshift_serverless_client = boto3.client('redshift-serverless',
-                                              region_name=DWH_REGION,
-                                              aws_access_key_id=KEY,
-                                              aws_secret_access_key=SECRET,
-                                              )
-
-    workgroup = redshift_serverless_client.get_workgroup(
-        workgroupName=DWH_WORKGROUP_NAME)
-    endpoint = workgroup['workgroup']['endpoint']
-    return endpoint['address']
-
-
-def get_role_arn():
+def get_role_arn() -> str:
+    """ Gets the ARN of the role to which we have attached permissions """
 
     iam_client = boto3.client('iam',
                               region_name=DWH_REGION,
@@ -46,7 +36,8 @@ def get_role_arn():
     return iam_client.get_role(RoleName=DWH_IAM_ROLE_NAME)['Role']['Arn']
 
 
-def load_staging_tables(cur, conn):
+def load_staging_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection):
+    """ Extracts data from S3 into staging database tables """
 
     role_arn = get_role_arn()
 
@@ -56,18 +47,21 @@ def load_staging_tables(cur, conn):
         conn.commit()
 
 
-def insert_tables(cur, conn):
+def insert_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection):
+    """ Transforms and loads data in staging tables into fact-dimension tables"""
     for query in insert_table_queries:
         cur.execute(query)
         conn.commit()
 
 
 def main():
+    """ This method controls the ETL processes """
 
-    host = get_host()
+    host = utilities.get_host(DWH_WORKGROUP_NAME, DWH_REGION, KEY, SECRET)
 
     conn = psycopg2.connect(
-        f"host={host} dbname={DWH_DB} user={DWH_DB_USER} password={DWH_DB_PASSWORD} port={DWH_PORT}")
+        f"host={host} dbname={DWH_DB} user={DWH_DB_USER}" +
+        f"password={DWH_DB_PASSWORD} port={DWH_PORT}")
     cur = conn.cursor()
 
     load_staging_tables(cur, conn)

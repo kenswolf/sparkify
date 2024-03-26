@@ -1,3 +1,6 @@
+""" Replace any existing tables with all new empty tables, 
+    staging and fact-dimension tables """
+
 import configparser
 import boto3
 from sql_queries import create_table_queries, drop_table_queries
@@ -5,6 +8,8 @@ import boto3_sql_util
 
 
 def drop_tables(redshift_data_client, db_name, work_group_name):
+    """ loop through list of DDL SQL to drop any existing 
+    tables (that we are creating new versions of)"""
 
     for query in drop_table_queries:
         boto3_sql_util.execute_sql(redshift_data_client,
@@ -14,6 +19,7 @@ def drop_tables(redshift_data_client, db_name, work_group_name):
 
 
 def create_new_tables(redshift_data_client, db_name, work_group_name):
+    """ loop through list of DDL SQL to create new tables """
     for query in create_table_queries:
         boto3_sql_util.execute_sql(redshift_data_client,
                                    query,
@@ -22,6 +28,8 @@ def create_new_tables(redshift_data_client, db_name, work_group_name):
 
 
 def create_tables():
+    """ Replace any existing tables with all new empty tables, 
+    staging and fact-dimension tables """
 
     config = configparser.ConfigParser()
     config.read('dwh.cfg')

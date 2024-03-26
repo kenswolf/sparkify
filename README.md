@@ -10,12 +10,6 @@ The data resides in S3, in a directory of JSON logs on user activity on the app,
 
 The data sources is S3 in the us-west-2 region and the serverless Redshift and its database are in the us-east1-region
  
-# TODO
-* sample supported queries  
-* Use IAC to implement the destruction of infrastructure.   
-* cleanup code files
-* review rebric  
-
 # Sample Supported Queries
 
 TODO  
@@ -43,7 +37,7 @@ The song-play data is located in s3://udacity-dend/log_data in the us-west-2 reg
 
 ## Create Infrastructure
 
-1. Run ... python3 iac.py ... to  ...
+1. Run ... python3 iac_create.py ... to  ...
 
     * create a role that allows redshift to make calls to AWS services and the privilages to read s3
     
@@ -80,10 +74,12 @@ Note that this uses the psychopg2 and boto3 librarys
 
 # Support Files
          
-* sql_queries.py - contains all the sql (DDL, inserts, queries)
-* boto3_sql_util.py - includes three boto3 specific sql methods: a generic execute sql method, a sql debugging method, and a method to convert a query result into a pandas DataFrame
-* dwh.cfg - configuration file
-* util_s3.py - methods for listing files on s3, counting files on s3, and downloading files from s3.  It is not used in the primary use of this system.
+* iac_delete.py - Deletes the redshift including the database.  It takes about ten minutes to complete.  It runs until it can verify the deletion or it errors out. Note it does not remove ingress rule because other Redshift may be using it.
+* sql_queries.py - Contains all the sql (DDL, inserts, queries)
+* boto3_sql_util.py - Includes three boto3 specific sql methods: a generic execute sql method, a sql debugging method, and a method to convert a query result into a pandas DataFrame
+* dwh.cfg - Configuration file
+* utilities.py - Methods for building printable duration strings, listing files on s3, counting files on s3, downloading files from s3, and retrieving the database host/endpoint.
+* sample_queries.py - sample queries of the fact-dimension tables  
 
 # Fact Dimension Schema  
  

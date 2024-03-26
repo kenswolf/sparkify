@@ -1,3 +1,6 @@
+""" Create ingress rule from a single user's IP address 
+to port 5439 for db access to the Redshift database"""
+
 import configparser
 import requests
 import boto3
@@ -12,13 +15,17 @@ DWH_WORKGROUP_NAME = config.get("DWH", "DWH_WORKGROUP_NAME")
 
 
 def _get_cidr_ip():
-    response = requests.get('https://httpbin.org/ip')
+    """ Gets the CIDR IP for the ingress rule, which is just the 
+    user's IP followed by a networking subnet mask (e.g. '/32') added """
+
+    response = requests.get('https://httpbin.org/ip', timeout=10)
     ip_address = response.json()['origin']
     cidr_ip = ip_address + '/32'
     return cidr_ip
 
 
 def _get_security_group_id(redshift_serverless_client):
+    """ """
     response = redshift_serverless_client.list_workgroups()
     for wg in response['workgroups']:
         if wg['workgroupName'] == DWH_WORKGROUP_NAME:
@@ -28,13 +35,17 @@ def _get_security_group_id(redshift_serverless_client):
 
 
 def _ingress_rule_exists(ec2_client, security_group_id):
+    """ Check if rule already exists """
     response = ec2_client.describe_security_groups(
         GroupIds=[security_group_id])
     rule_exists = False
     for security_group in response.get('SecurityGroups', []):
         rules = security_group.get('IpPermissions', [])
         for rule in rules:
-            if ((rule['ToPort'] == rule['FromPort'] == 5439) and rule['IpProtocol'] == 'tcp' and rule['IpRanges'][0]['CidrIp'] == '23.93.180.103/32'):
+            if ((rule['ToPort'] == rule['FromPort'] == 5439)
+                and rule['IpProtocol'] == 'tcp'
+                    and rule['IpRanges'][0]['CidrIp'] == '23.93.180.103/32'):
+
                 rule_exists = True
                 print('Rule exists', rule['IpRanges'][0]['CidrIp'], rule)
                 break
@@ -43,6 +54,7 @@ def _ingress_rule_exists(ec2_client, security_group_id):
 
 
 def _create_ingress_rule(ec2_client, security_group_id, cidr_ip):
+    """ Creates the actual rule """
 
     ingress_params = {
         'GroupId': security_group_id,
@@ -59,6 +71,7 @@ def _create_ingress_rule(ec2_client, security_group_id, cidr_ip):
 
 
 def setup_ingress_rule():
+    """ This method controls the process of creating the ingress rule """
 
     rs_client = boto3.client('redshift-serverless',
                              region_name=DWH_REGION,
