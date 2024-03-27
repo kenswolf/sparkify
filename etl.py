@@ -11,6 +11,11 @@ import utilities
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
 
+S3_REGION = config.get("S3", "S3_REGION")
+LOG_DATA = config.get("S3", "LOG_DATA")
+LOG_JSONPATH = config.get("S3", "LOG_JSONPATH")
+SONG_DATA = config.get("S3", "SONG_DATA")
+
 KEY = config.get('AWS', 'KEY')
 SECRET = config.get('AWS', 'SECRET')
 
@@ -42,7 +47,14 @@ def load_staging_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensio
     role_arn = get_role_arn()
 
     for query in copy_table_queries:
-        query = query.format(role_arn)
+
+        if 'staging_songs' in query:
+            query = query.format(SONG_DATA, role_arn, S3_REGION)
+        elif 'staging_events' in query:
+            query = query.format(LOG_DATA, role_arn, LOG_JSONPATH, S3_REGION)
+
+        print('\n', query, '\n')
+
         cur.execute(query)
         conn.commit()
 

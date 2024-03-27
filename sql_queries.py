@@ -113,18 +113,18 @@ TIME_TABLE_CREATE = """
 
 STAGING_EVENTS_COPY = """
     COPY staging_events 
-        FROM 's3://udacity-dend/log-data'
+        FROM {}
         CREDENTIALS 'aws_iam_role={}'
-        FORMAT AS JSON 's3://udacity-dend/log_json_path.json'
-        compupdate off region 'us-west-2';
+        FORMAT AS JSON {}
+        compupdate off region '{}';
 """
 
 STAGING_SONGS_COPY = """
     COPY staging_songs 
-        FROM 's3://udacity-dend/song-data/A/A'
+        FROM {}
         CREDENTIALS 'aws_iam_role={}'
         FORMAT AS JSON 'auto'
-        compupdate off region 'us-west-2';
+        compupdate off region '{}';
 """
 
 # FINAL TABLES

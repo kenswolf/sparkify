@@ -36,15 +36,21 @@ def main():
         table = PrettyTable()
         table.field_names = [desc[0] for desc in cur.description]
         rows = cur.fetchall()
+        count = 0
         for row in rows:
             table.add_row(row)
+            count += 1
+            if count == 35:
+                break
+
         print('-----------------------------------')
         print('')
-        print(title)
+        print(title, '(showing top 30 rows of data)')
         print('')
         print(query)
         print('')
         print(table)
+        print('')
 
     conn.commit()
     conn.close()

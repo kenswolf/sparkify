@@ -4,11 +4,13 @@
 import time
 from datetime import datetime
 import boto3
+
+""" 
 import pandas as pd
 
 
 def get_query_results_as_a_dataframe(result) -> pd.DataFrame:
-    """ load the results of a sql query into a pandas DataFrame """
+    # load the results of a sql query into a pandas DataFrame  
 
     columns = [col['name'] for col in result['ColumnMetadata']]
 
@@ -33,6 +35,7 @@ def get_query_results_as_a_dataframe(result) -> pd.DataFrame:
     df = pd.DataFrame(transformed_results)
 
     return df
+"""
 
 
 def execute_sql(redshift_data: boto3.session.Session.resource,

@@ -12,11 +12,26 @@ The data sources is S3 in the us-west-2 region and the serverless Redshift and i
  
 # Sample Supported Queries
 
-TODO  
-* what is the most played song?
-* When is the highest usage time of day by hour for songs?
-* You could simply have a section of sql_queries.py that is executed after the load is done that prints a question and then the answer.
-   
+These are the queries run by analytics.py in step six (see below).
+
+## Queries for understanding the user community
+
+* Id of Users who played songs for free and as paid
+* Types of Users
+* Users who played the most songs
+
+## Queries for understanding the bredth of the catalog
+* Number of Songs
+* Number of Artists 
+* Most played Artists
+* Most played Songs
+
+## Queries for understanding play volume
+* Song play volume by year
+* Song play volume by day of the month
+* Song play volume by week of the year
+* Song play volume by month
+* Song play volume by weekday 
 
 # Data  
 
@@ -27,15 +42,27 @@ Song datafiles are structured as follows ...  {"num_songs": 1, "artist_id": "ARJ
 The song-play data is located in s3://udacity-dend/log_data in the us-west-2 region. A log_json_path.json files exists with the data, to facilitate loading. 
 
 # Project Execution Steps
+
+## Step 1 - Setup Python Libraries
+
+This can be done two ways ...
+* Installying required libraries from a provided configuration file
+   * pip install -r requirements.txt 
+* Installying required libraries individually 
+   1. pip install boto3
+   2. pip install prettytable
+   3. pip install psycopg2-binary
+   4. pip install requests 
  
-## Step 1 - Setup AWS Access
+## Step 2 - Setup AWS Access
 
 1. Log into AWS Console
 1. create iam user  with the "AdministratorAccess" policy/privilages 
 1. generate secret and key for the new user
 1. put the secret and key into dwh.cfg config file 
+   (as the values of KEY and SECRET in the AWS section of the configuration file)
 
-## Step 2 - Create Infrastructure
+## Step 3 - Create Infrastructure
 
 1. Run ... python3 iac_create.py ... to  ...
 
@@ -55,7 +82,7 @@ The song-play data is located in s3://udacity-dend/log_data in the us-west-2 reg
 
 Note that this code uses the boto3 library
 
-## Step 3 - Create Database Structure
+## Step 4 - Create Database Structure
  
 1. Run ... python3 create_tables.py ... to  ...
 
@@ -63,20 +90,21 @@ Note that this code uses the boto3 library
 
 Note that this code uses the boto3 library.  It does not use the psychopg2 library.  This is simply because I wanted to learn about using the boto3 library for SQL commands.
 
-## Step 4 - Populate the Database
+## Step 5 - Populate the Database
  
 1. Run ... python3 etl.py ... to  ...
 
     * extract from s3 to staging tables
 transform and load from staging tables into the data warehouse fact-dimension star schema optimized for queries on song play analysis
 
-Note that this uses the psychopg2 and boto3 librarys
+Note - this uses the psychopg2 and boto3 librarys
+Note - last time I ran this it took 45 minutes
 
-## Step 5 - Data Analysis
+## Step 6 - Data Analysis
  
-1. Run ... python3 sample_queries.py ... to gain a deeper understand of the business
+1. Run ... python3 analysis.py ... runs sample queries in order for the results to provide insights leading to a deeper understand of the business
 
-## Step 6 - Delete Infrastructure
+## Step 7 - Delete Infrastructure
 
 1. Run ... python3 iac_delete.py ... to delete the AWS Serverless Redshift and its database
 
