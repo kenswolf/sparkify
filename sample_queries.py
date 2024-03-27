@@ -1,9 +1,10 @@
-"""   """
+""" Data Analysis """
 
 import configparser
-import psycopg2 
+import psycopg2
+from prettytable import PrettyTable
+from sql_queries import sample_queries, sample_query_titles
 import utilities
-import pandas as pd
 
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
@@ -21,33 +22,29 @@ DWH_DB_USER = config.get("DWH", "DWH_DB_USER")
 DWH_DB_PASSWORD = config.get("DWH", "DWH_DB_PASSWORD")
 
 
-def query_one(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection):
-    """  abc """ 
-
-    query = "SELECT user_id, first_name, last_name, gender, level FROM users"
-    df = pd.read_sql_query(query, conn)
-    print(df)
-
-def query_two(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection): 
-    for query in []:
-        cur.execute(query)
-        conn.commit()
-
-def query_three(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection): 
-    for query in []:
-        cur.execute(query)
-        conn.commit()
-
-
-def main(): 
+def main():
+    """ Run Sample Queries and Display Results """
     host = utilities.get_host(DWH_WORKGROUP_NAME, DWH_REGION, KEY, SECRET)
 
     conn = psycopg2.connect(
-        f"host={host} dbname={DWH_DB} user={DWH_DB_USER}" +
+        f"host={host} dbname={DWH_DB} user={DWH_DB_USER} " +
         f"password={DWH_DB_PASSWORD} port={DWH_PORT}")
     cur = conn.cursor()
 
-    query_one(cur, conn) 
+    for query, title in zip(sample_queries, sample_query_titles):
+        cur.execute(query)
+        table = PrettyTable()
+        table.field_names = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+        for row in rows:
+            table.add_row(row)
+        print('-----------------------------------')
+        print('')
+        print(title)
+        print('')
+        print(query)
+        print('')
+        print(table)
 
     conn.commit()
     conn.close()

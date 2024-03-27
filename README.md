@@ -28,14 +28,14 @@ The song-play data is located in s3://udacity-dend/log_data in the us-west-2 reg
 
 # Project Execution Steps
  
-## Setup AWS Access
+## Step 1 - Setup AWS Access
 
 1. Log into AWS Console
 1. create iam user  with the "AdministratorAccess" policy/privilages 
 1. generate secret and key for the new user
 1. put the secret and key into dwh.cfg config file 
 
-## Create Infrastructure
+## Step 2 - Create Infrastructure
 
 1. Run ... python3 iac_create.py ... to  ...
 
@@ -55,7 +55,7 @@ The song-play data is located in s3://udacity-dend/log_data in the us-west-2 reg
 
 Note that this code uses the boto3 library
 
-## Create Database Structure
+## Step 3 - Create Database Structure
  
 1. Run ... python3 create_tables.py ... to  ...
 
@@ -63,7 +63,7 @@ Note that this code uses the boto3 library
 
 Note that this code uses the boto3 library.  It does not use the psychopg2 library.  This is simply because I wanted to learn about using the boto3 library for SQL commands.
 
-## Populate the Database
+## Step 4 - Populate the Database
  
 1. Run ... python3 etl.py ... to  ...
 
@@ -72,8 +72,19 @@ transform and load from staging tables into the data warehouse fact-dimension st
 
 Note that this uses the psychopg2 and boto3 librarys
 
-# Support Files
-         
+## Step 5 - Data Analysis
+ 
+1. Run ... python3 sample_queries.py ... to gain a deeper understand of the business
+
+## Step 6 - Delete Infrastructure
+
+1. Run ... python3 iac_delete.py ... to delete the AWS Serverless Redshift and its database
+
+# Project Files
+
+* iac_create.py - see above 
+* create_tables.py - see above  
+* etl.py - see above 
 * iac_delete.py - Deletes the redshift including the database.  It takes about ten minutes to complete.  It runs until it can verify the deletion or it errors out. Note it does not remove ingress rule because other Redshift may be using it.
 * sql_queries.py - Contains all the sql (DDL, inserts, queries)
 * boto3_sql_util.py - Includes three boto3 specific sql methods: a generic execute sql method, a sql debugging method, and a method to convert a query result into a pandas DataFrame

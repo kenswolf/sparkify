@@ -60,7 +60,7 @@ def main():
     host = utilities.get_host(DWH_WORKGROUP_NAME, DWH_REGION, KEY, SECRET)
 
     conn = psycopg2.connect(
-        f"host={host} dbname={DWH_DB} user={DWH_DB_USER}" +
+        f"host={host} dbname={DWH_DB} user={DWH_DB_USER} " +
         f"password={DWH_DB_PASSWORD} port={DWH_PORT}")
     cur = conn.cursor()
 

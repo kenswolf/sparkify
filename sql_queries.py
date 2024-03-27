@@ -207,63 +207,159 @@ insert_table_queries = [SONGPLAYS_TABLE_INSERT,
                         TIME_TABLE_INSERT]
 
 
-# Verification
-""" 
-SELECT
-    COUNT(*) AS total_rows,
-    (SELECT COUNT(*) FROM 
-    (SELECT DISTINCT user_id, first_name, 
-        last_name, gender, level FROM users)) 
-    AS unique_rows
-FROM 
-    users
-LIMIT 100;
+# Sample Queries
+SAMPLE_QUERY_USERS_WHO_USED_FREE_AND_PAID = """
+SELECT  
+    u.user_id 
+    AS users_who_used_both_free_and_paid
+    FROM users u
+    WHERE u.user_id in (SELECT s.user_id from users s where s.level = 'free')
+    AND u.level = 'paid';"""
 
+
+SAMPLE_QUERY_TYPES_OF_USERS = """
+SELECT
+    COUNT(*) AS total_user_records,
+
+    (SELECT COUNT(*) 
+    FROM (
+        SELECT DISTINCT 
+        user_id, first_name, last_name, gender, level  
+        FROM users)) 
+    AS unique_users_levels, 
+
+    (SELECT COUNT(*) 
+    FROM (
+        SELECT DISTINCT 
+        user_id, first_name, last_name, gender
+        FROM users)) 
+    AS unique_users, 
  
-SELECT
-    COUNT(*) AS total_rows,
-    (SELECT COUNT(*) FROM ( SELECT DISTINCT
-        start_time, user_id, level, song_id,   
-        artist_id, session_id, location, 
-        user_agent from songplays) ) 
-    AS unique_rows
-FROM 
-    songplays
-LIMIT 100;
-
-SELECT
-    COUNT(*) AS total_rows,
-    (SELECT COUNT(*) FROM 
-    ( SELECT DISTINCT song_id, 
-        artist_id, title, year, 
-        duration from songs)) 
-    AS unique_rows
-FROM  songs
-LIMIT 100;
-
-SELECT
-    COUNT(*) AS total_rows,
     (SELECT COUNT(*) 
-    FROM 
-        (SELECT DISTINCT artist_id, artist_name, 
-        artist_location, artist_latitude, 
-        artist_longitude from artists))
-    AS unique_rows
-FROM 
-    artists
-LIMIT 100;
+    FROM (
+        SELECT DISTINCT user_id 
+        FROM users
+        WHERE level = 'free')) 
+    AS free_users,
 
-
-
-SELECT
-    COUNT(*) AS total_rows,
     (SELECT COUNT(*) 
-    FROM (SELECT DISTINCT start_time, 
-        hour, day, week, month, 
-        year, weekday from time))
-    AS unique_rows
-FROM 
-    time
-LIMIT 100; 
+    FROM (
+        SELECT DISTINCT user_id 
+        FROM users
+        WHERE level = 'paid')) 
+    AS paid_users,
 
-"""
+    (SELECT COUNT(*) 
+    FROM (
+        SELECT DISTINCT u.user_id 
+        FROM users u
+        WHERE u.level = 'paid'
+        AND   u.user_id in  
+            (SELECT s.user_id from users s where s.level = 'free'))) 
+    AS free_and_paid_users, 
+
+    (SELECT COUNT(*) 
+    FROM (
+        SELECT DISTINCT user_id 
+        FROM users
+        WHERE level != 'free'
+        AND   level != 'paid')) 
+    AS not_free_and_not_paid_users
+
+FROM users;"""
+
+
+SAMPLE_QUERY_COUNT_SONGS = "SELECT COUNT(*) FROM songs;"
+SAMPLE_QUERY_COUNT_ARTISTS = "SELECT COUNT(*) FROM artists;"
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_USER = """
+    SELECT s.user_id, COUNT(*) 
+    FROM songplays s, users u 
+    WHERE s.user_id = u.user_id 
+    GROUP BY s.user_id 
+    ORDER BY COUNT(*) DESC;"""
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_YEAR = """
+    SELECT t.year, COUNT(*) 
+    FROM songplays s, time t 
+    WHERE s.start_time = t.start_time 
+    GROUP BY t.year 
+    ORDER BY t.year ASC;"""
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_DAY = """
+    SELECT t.day, COUNT(*) 
+    FROM songplays s, time t 
+    WHERE s.start_time = t.start_time 
+    GROUP BY t.day 
+    ORDER BY t.day ASC;"""
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_WEEK = """
+    SELECT t.week, COUNT(*) 
+    FROM songplays s, time t 
+    WHERE s.start_time = t.start_time 
+    GROUP BY t.week 
+    ORDER BY t.week ASC;"""
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_MONTH = """
+    SELECT t.month, COUNT(*) 
+    FROM songplays s, time t 
+    WHERE s.start_time = t.start_time 
+    GROUP BY t.month 
+    ORDER BY t.month ASC;"""
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_HOUR = """
+    SELECT t.hour, COUNT(*) 
+    FROM songplays s, time t 
+    WHERE s.start_time = t.start_time 
+    GROUP BY t.hour 
+    ORDER BY t.hour ASC;"""
+
+SAMPLE_QUERY_COUNT_SONGPLAYS_BY_WEEKDAY = """
+    SELECT t.weekday, COUNT(*) 
+    FROM songplays s, time t 
+    WHERE s.start_time = t.start_time 
+    GROUP BY t.weekday 
+    ORDER BY t.weekday ASC;"""
+
+
+SAMPLE_QUERY_POPULAR_ARTISTS = """
+    SELECT a.artist_name, count(*) 
+    FROM songplays s, artists a 
+    WHERE s.artist_id = a.artist_id 
+    GROUP BY a.artist_name 
+    ORDER BY COUNT(*) DESC;"""
+
+SAMPLE_QUERY_POPULAR_SONGS = """
+    SELECT a.title, count(*) 
+    FROM songplays s, songs a 
+    WHERE s.song_id = a.song_id 
+    GROUP BY a.title
+    ORDER BY COUNT(*) DESC;"""
+
+
+sample_queries = [SAMPLE_QUERY_USERS_WHO_USED_FREE_AND_PAID,
+                  SAMPLE_QUERY_TYPES_OF_USERS,
+                  SAMPLE_QUERY_COUNT_SONGS,
+                  SAMPLE_QUERY_COUNT_ARTISTS,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_USER,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_YEAR,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_DAY,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_WEEK,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_MONTH,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_HOUR,
+                  SAMPLE_QUERY_COUNT_SONGPLAYS_BY_WEEKDAY,
+                  SAMPLE_QUERY_POPULAR_ARTISTS,
+                  SAMPLE_QUERY_POPULAR_SONGS]
+
+sample_query_titles = [ 'Id of Users who played songs for free and as paid',
+                        'Types of Users',
+                        'Number of Songs',
+                        'Number of Artists',
+                        'Users who played the most songs', 
+                        'Song play volume by year',
+                        'Song play volume by day of the month',
+                        'Song play volume by week of the year',
+                        'Song play volume by month',
+                        'Song play volume by weekday',  
+                        'Most played Artists',
+                        'Most played Songs']
