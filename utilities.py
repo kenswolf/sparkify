@@ -1,7 +1,6 @@
 """ Utility Functions """
 
 import configparser
-import json
 import time
 import psycopg2
 

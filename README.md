@@ -120,31 +120,28 @@ Note that this code uses the boto3 library.  It does not use the psychopg2 libra
  
 1. Run ... python3 etl.py ... to  ...
 
-    * extract from s3 to staging tables
-transform and load from staging tables into the data warehouse fact-dimension star schema optimized for queries on song play analysis
+   * extract from s3 to staging tables
+   * transform and load from staging tables into the data warehouse fact-dimension star schema optimized for queries on song play analysis
+   * runs the analysis (sample) queries - runs sample queries in order for the results to provide insights leading to a deeper understand of the business
 
 Note - this uses the psychopg2 and boto3 librarys
 Note - last time I ran this it took 45 minutes
 
-## Step 6 - Data Analysis
- 
-1. Run ... python3 analysis.py ... runs sample queries in order for the results to provide insights leading to a deeper understand of the business
-
-## Step 7 - Delete Infrastructure
+## Step 6 - Delete Infrastructure
 
 1. Run ... python3 iac_delete.py ... to delete the AWS Serverless Redshift and its database
 
 # Project Files
 
-* iac_create.py - see above 
-* create_tables.py - see above  
-* etl.py - see above 
-* iac_delete.py - Deletes the redshift including the database.  It takes about ten minutes to complete.  It runs until it can verify the deletion or it errors out. Note it does not remove ingress rule because other Redshift may be using it.
-* sql_queries.py - Contains all the sql (DDL, inserts, queries)
-* boto3_sql_util.py - Includes three boto3 specific sql methods: a generic execute sql method, a sql debugging method, and a method to convert a query result into a pandas DataFrame
-* dwh.cfg - Configuration file
-* utilities.py - Methods for building printable duration strings, listing files on s3, counting files on s3, downloading files from s3, and retrieving the database host/endpoint.
-* sample_queries.py - sample queries of the fact-dimension tables  
+   1. iac_create.py - see above, run in fll-project-step #3 
+   2. create_tables.py - see above, run in fll-project-step #4 and in project-asssessment step #3 
+   3. etl.py - see above, run in fll-project-step #5 and in project-asssessment step #3
+   4. iac_delete.py - Deletes the redshift including the database.  It takes about ten minutes to complete.  It runs until it can verify the deletion or it errors out. Note it does not remove ingress rule because other Redshift may be using it.
+   5. sql_queries.py - Contains all the sql (DDL, inserts, queries).  Used by create_tables.py, etl.py, and analysis.py
+   6. utilities.py - Methods for building printable duration strings (used by iac_create.py and iac_delete.py) and getting a sql client connection to the Redshift database (used by create_tables.py, etl.py, and analysis.py)
+   7. analysis.py - sample queries of the fact-dimension tables, can be run independently but is also run in/by etl.py.  Nicely formatted output.
+   8. dwh.cfg - Configuration file used for full project and project assessment
+   9. dwh_iac.cfg - configuration file only used for full project
 
 # Fact Dimension Schema  
  
