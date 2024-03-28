@@ -41,7 +41,23 @@ Song datafiles are structured as follows ...  {"num_songs": 1, "artist_id": "ARJ
 
 The song-play data is located in s3://udacity-dend/log_data in the us-west-2 region. A log_json_path.json files exists with the data, to facilitate loading. 
 
-# Project Execution Steps
+# Project Assessment Steps
+
+The assigment for this project, in the Udacity Data Engineering with AWS nano-degree, did not include all the functionality in this project.  
+
+For example using 3rd party boto3 and requests libraries, a serverless Redshift instead of a clustered Redshift, and the infrastructure as code, is all above and beyond the assignment.  
+
+As a result the entire project can be run with all the bells and whistles, or just create_tables.py and etl.py can be run on an existing Redshift cluster.
+
+As a result in order to assess what was specifically assigned, the Udacity reviewer will follow these the steps:
+
+   1. There will be an already running Redshift cluster (created by reviewer)
+   1. The reviewer will update the config file (dwh.cfg) with cluster identifier (key is 'host'), IAM ROLE ARN (key is 'arn') and DB credentials for the above mentioned cluster
+   1. Runs the create_tables.py and etl.py scripts
+   1. Check the final tables.
+ 
+
+# Full Project Execution Steps
 
 ## Step 1 - Setup Python Libraries
 
@@ -49,10 +65,11 @@ This can be done two ways ...
 * Installying required libraries from a provided configuration file
    * pip install -r requirements.txt 
 * Installying required libraries individually 
-   1. pip install boto3
-   2. pip install prettytable
-   3. pip install psycopg2-binary
+   1. pip install --upgrade pip
+   2. pip install boto3
    4. pip install requests 
+   3. pip install prettytable
+   5. pip install psycopg2 
  
 ## Step 2 - Setup AWS Access
 
@@ -79,6 +96,15 @@ This can be done two ways ...
     but we only need one for this program) 
     
     * create an ingress rule for the IP address of the computer running the iac code  (note ingress rules for additional IP addresses can always be created on AWS console)
+
+    * write the host endpoint and the role arn to the config file 
+      1. This is done to seperate the boto3/aws-iac code, 
+        that determines and writes the host and role arn values to code, from the sql client code, 
+        that creates and populated db tables which needs the host and role arn values
+      1. This is done because this project does a lot more than the assignment for which is
+        actually graded, and it is graded using an existing reshift cluster and only
+        the sql client code (create_tables.py and etl.py) is used.  So that code may not include
+        boto3 code or use the key & secret required to create a boto3 cleint. 
 
 Note that this code uses the boto3 library
 

@@ -33,19 +33,19 @@ import ingress_rule
 import utilities
 
 config = configparser.ConfigParser()
-config.read_file(open('dwh.cfg'))
+config.read('dwh.cfg')
+DB_NAME = config.get("CLUSTER", "DB_NAME")
+DB_USER = config.get("CLUSTER", "DB_USER")
+DB_PASSWORD = config.get("CLUSTER", "DB_PASSWORD")
 
-KEY = config.get('AWS', 'KEY')
-SECRET = config.get('AWS', 'SECRET')
-
-DWH_DB = config.get("DWH", "DWH_DB")
-DWH_DB_USER = config.get("DWH", "DWH_DB_USER")
-DWH_DB_PASSWORD = config.get("DWH", "DWH_DB_PASSWORD")
-
-DWH_REGION = config.get("DWH", "DWH_REGION")
-DWH_IAM_ROLE_NAME = config.get("DWH", "DWH_IAM_ROLE_NAME")
-DWH_NAMESPACE_NAME = config.get("DWH", "DWH_NAMESPACE_NAME")
-DWH_WORKGROUP_NAME = config.get("DWH", "DWH_WORKGROUP_NAME")
+config_iac = configparser.ConfigParser()
+config_iac.read('dwh_iac.cfg')
+KEY = config_iac.get('AWS', 'KEY')
+SECRET = config_iac.get('AWS', 'SECRET')
+DWH_REGION = config_iac.get("DWH", "DWH_REGION")
+DWH_IAM_ROLE_NAME = config_iac.get("DWH", "DWH_IAM_ROLE_NAME")
+DWH_NAMESPACE_NAME = config_iac.get("DWH", "DWH_NAMESPACE_NAME")
+DWH_WORKGROUP_NAME = config_iac.get("DWH", "DWH_WORKGROUP_NAME")
 
 
 def setup_namespace(redshift_serverless: boto3.session.Session.resource,
@@ -63,9 +63,9 @@ def setup_namespace(redshift_serverless: boto3.session.Session.resource,
     else:
         # https://boto3.amazonaws.com/v1/documentation/api/1.26.2/reference/services/redshift-serverless.html#RedshiftServerless.Client.create_namespace
         response = redshift_serverless.create_namespace(
-            adminUserPassword=DWH_DB_PASSWORD,
-            adminUsername=DWH_DB_USER,
-            dbName=DWH_DB,
+            adminUserPassword=DB_PASSWORD,
+            adminUsername=DB_USER,
+            dbName=DB_NAME,
             namespaceName=DWH_NAMESPACE_NAME,
             # Optionally specify other parameters like KMS key, admin username/password, etc.
             # 'arn:aws:iam::123456789012:role/YourRedshiftRole']
@@ -215,6 +215,32 @@ def wait_until_namespace_ready(redshift_serverless_client):
             time.sleep(10)  # Wait for 10 seconds before checking again
 
 
+def get_host(redshift_serverless_client):
+    """ Gets the string of the host / endpoint that is used for ingress requests """
+    workgroup = redshift_serverless_client.get_workgroup(
+        workgroupName=DWH_WORKGROUP_NAME)
+    endpoint = workgroup['workgroup']['endpoint']
+    return endpoint['address']
+
+
+def update_config_file(role_arn, host):
+    """ Writes the host endpoint and the role arn to the config file """
+
+    # This is done to seperate the boto3/aws-iac code,
+    # that determines and writes the host and role arn values to code, from the sql client code,
+    # that creates and populated db tables which needs the host and role arn values """
+    #
+    # This is also done because this project does a lot more than the assignment for which is
+    # actually graded, and it is graded using an existing reshift cluster and only
+    # the sql client code (create_tables.py and etl.py) is used.  So that code may not include
+    # boto3 code or use the key & secret required to create a boto3 cleint. """
+
+    config['IAM_ROLE']['ARN'] = role_arn
+    config['CLUSTER']['HOST'] = host
+    with open('dwh.cfg', 'w') as configfile:
+        config.write(configfile)
+
+
 def main():
     """ This method controls the IAC creation processes """
 
@@ -235,6 +261,10 @@ def main():
     wait_until_namespace_ready(redshift_serverless_client)
 
     wait_until_workgroup_ready(redshift_serverless_client)
+
+    host = get_host(redshift_serverless_client)
+
+    update_config_file(role_arn, host)
 
 
 if __name__ == "__main__":

@@ -6,11 +6,9 @@ from botocore.exceptions import ClientError
 import utilities
 
 config = configparser.ConfigParser()
-config.read_file(open('dwh.cfg'))
-
+config.read_file('dwh_iac.cfg')
 KEY = config.get('AWS', 'KEY')
 SECRET = config.get('AWS', 'SECRET')
-
 DWH_REGION = config.get("DWH", "DWH_REGION")
 DWH_NAMESPACE_NAME = config.get("DWH", "DWH_NAMESPACE_NAME")
 DWH_WORKGROUP_NAME = config.get("DWH", "DWH_WORKGROUP_NAME")

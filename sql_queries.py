@@ -113,15 +113,15 @@ TIME_TABLE_CREATE = """
 
 STAGING_EVENTS_COPY = """
     COPY staging_events 
-        FROM {}
+        FROM '{}'
         CREDENTIALS 'aws_iam_role={}'
-        FORMAT AS JSON {}
+        FORMAT AS JSON '{}'
         compupdate off region '{}';
 """
 
 STAGING_SONGS_COPY = """
     COPY staging_songs 
-        FROM {}
+        FROM '{}'
         CREDENTIALS 'aws_iam_role={}'
         FORMAT AS JSON 'auto'
         compupdate off region '{}';
@@ -219,35 +219,35 @@ SELECT
 
 SAMPLE_QUERY_TYPES_OF_USERS = """
 SELECT
-    COUNT(*) AS total_user_records,
+    COUNT(*) AS user_record_count,
 
     (SELECT COUNT(*) 
     FROM (
         SELECT DISTINCT 
         user_id, first_name, last_name, gender, level  
         FROM users)) 
-    AS unique_users_levels, 
+    AS unique_users_levels_count, 
 
     (SELECT COUNT(*) 
     FROM (
         SELECT DISTINCT 
         user_id, first_name, last_name, gender
         FROM users)) 
-    AS unique_users, 
+    AS users_count, 
  
     (SELECT COUNT(*) 
     FROM (
         SELECT DISTINCT user_id 
         FROM users
         WHERE level = 'free')) 
-    AS free_users,
+    AS free_users_count,
 
     (SELECT COUNT(*) 
     FROM (
         SELECT DISTINCT user_id 
         FROM users
         WHERE level = 'paid')) 
-    AS paid_users,
+    AS paid_users_count,
 
     (SELECT COUNT(*) 
     FROM (
@@ -256,7 +256,7 @@ SELECT
         WHERE u.level = 'paid'
         AND   u.user_id in  
             (SELECT s.user_id from users s where s.level = 'free'))) 
-    AS free_and_paid_users, 
+    AS users_both_free_and_paid_count, 
 
     (SELECT COUNT(*) 
     FROM (
@@ -264,7 +264,7 @@ SELECT
         FROM users
         WHERE level != 'free'
         AND   level != 'paid')) 
-    AS not_free_and_not_paid_users
+    AS userds_not_free_and_not_paid_count
 
 FROM users;"""
 
@@ -323,17 +323,17 @@ SAMPLE_QUERY_COUNT_SONGPLAYS_BY_WEEKDAY = """
 
 
 SAMPLE_QUERY_POPULAR_ARTISTS = """
-    SELECT a.artist_name, count(*) 
+    SELECT count(*), a.artist_name  
     FROM songplays s, artists a 
     WHERE s.artist_id = a.artist_id 
     GROUP BY a.artist_name 
     ORDER BY COUNT(*) DESC;"""
 
 SAMPLE_QUERY_POPULAR_SONGS = """
-    SELECT a.title, count(*) 
-    FROM songplays s, songs a 
-    WHERE s.song_id = a.song_id 
-    GROUP BY a.title
+    SELECT count(*), g.title
+    FROM songplays s, songs g 
+    WHERE s.song_id = g.song_id 
+    GROUP BY g.title
     ORDER BY COUNT(*) DESC;"""
 
 
@@ -351,15 +351,16 @@ sample_queries = [SAMPLE_QUERY_USERS_WHO_USED_FREE_AND_PAID,
                   SAMPLE_QUERY_POPULAR_ARTISTS,
                   SAMPLE_QUERY_POPULAR_SONGS]
 
-sample_query_titles = [ 'Id of Users who played songs for free and as paid',
-                        'Types of Users',
-                        'Number of Songs',
-                        'Number of Artists',
-                        'Users who played the most songs', 
-                        'Song play volume by year',
-                        'Song play volume by day of the month',
-                        'Song play volume by week of the year',
-                        'Song play volume by month',
-                        'Song play volume by weekday',  
-                        'Most played Artists',
-                        'Most played Songs']
+sample_query_titles = ['Id of Users who played songs for free and as paid',
+                       'Number of Users, of different types',
+                       'Number of Songs',
+                       'Number of Artists',
+                       'Users who played the most songs',
+                       'Song play volume by year',
+                       'Song play volume by day of the month',
+                       'Song play volume by week of the year',
+                       'Song play volume by month',
+                       'Song play volume by hour',
+                       'Song play volume by weekday',
+                       'Most played Artists',
+                       'Most played Songs']

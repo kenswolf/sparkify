@@ -4,54 +4,29 @@ with a Serverless Redshift """
 
 import configparser
 import psycopg2
-import boto3
-from sql_queries import copy_table_queries, insert_table_queries
 import utilities
+import analysis
+from sql_queries import copy_table_queries, insert_table_queries
+
+LOG_DATA = 's3://udacity-dend/log-data'
+LOG_JSONPATH = 's3://udacity-dend/log_json_path.json'
+SONG_DATA = 's3://udacity-dend/song-data/A/A'
+S3_REGION = 'us-west-2'
 
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
-
-S3_REGION = config.get("S3", "S3_REGION")
-LOG_DATA = config.get("S3", "LOG_DATA")
-LOG_JSONPATH = config.get("S3", "LOG_JSONPATH")
-SONG_DATA = config.get("S3", "SONG_DATA")
-
-KEY = config.get('AWS', 'KEY')
-SECRET = config.get('AWS', 'SECRET')
-
-DWH_PORT = config.get("DWH", "DWH_PORT")
-DWH_REGION = config.get("DWH", "DWH_REGION")
-DWH_IAM_ROLE_NAME = config.get("DWH", "DWH_IAM_ROLE_NAME")
-DWH_WORKGROUP_NAME = config.get("DWH", "DWH_WORKGROUP_NAME")
-
-DWH_DB = config.get("DWH", "DWH_DB")
-DWH_DB_USER = config.get("DWH", "DWH_DB_USER")
-DWH_DB_PASSWORD = config.get("DWH", "DWH_DB_PASSWORD")
-
-
-def get_role_arn() -> str:
-    """ Gets the ARN of the role to which we have attached permissions """
-
-    iam_client = boto3.client('iam',
-                              region_name=DWH_REGION,
-                              aws_access_key_id=KEY,
-                              aws_secret_access_key=SECRET
-                              )
-
-    return iam_client.get_role(RoleName=DWH_IAM_ROLE_NAME)['Role']['Arn']
+ROLE_ARN = config.get("IAM_ROLE", "ARN")
 
 
 def load_staging_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection):
     """ Extracts data from S3 into staging database tables """
 
-    role_arn = get_role_arn()
-
     for query in copy_table_queries:
 
         if 'staging_songs' in query:
-            query = query.format(SONG_DATA, role_arn, S3_REGION)
+            query = query.format(SONG_DATA, ROLE_ARN, S3_REGION)
         elif 'staging_events' in query:
-            query = query.format(LOG_DATA, role_arn, LOG_JSONPATH, S3_REGION)
+            query = query.format(LOG_DATA, ROLE_ARN, LOG_JSONPATH, S3_REGION)
 
         print('\n', query, '\n')
 
@@ -62,6 +37,9 @@ def load_staging_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensio
 def insert_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.connection):
     """ Transforms and loads data in staging tables into fact-dimension tables"""
     for query in insert_table_queries:
+
+        print('\n', query, '\n')
+
         cur.execute(query)
         conn.commit()
 
@@ -69,15 +47,14 @@ def insert_tables(cur: psycopg2.extensions.cursor, conn: psycopg2.extensions.con
 def main():
     """ This method controls the ETL processes """
 
-    host = utilities.get_host(DWH_WORKGROUP_NAME, DWH_REGION, KEY, SECRET)
-
-    conn = psycopg2.connect(
-        f"host={host} dbname={DWH_DB} user={DWH_DB_USER} " +
-        f"password={DWH_DB_PASSWORD} port={DWH_PORT}")
+    conn = utilities.get_db_connection()
     cur = conn.cursor()
 
     load_staging_tables(cur, conn)
     insert_tables(cur, conn)
+
+    print('\n\nETL completed. Starting analysis queries.\n\n')
+    analysis.run_analysis_queries(cur)
 
     conn.commit()
     conn.close()

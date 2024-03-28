@@ -6,7 +6,7 @@ import requests
 import boto3
 
 config = configparser.ConfigParser()
-config.read('dwh.cfg')
+config.read('dwh_iac.cfg')
 
 KEY = config.get('AWS', 'KEY')
 SECRET = config.get('AWS', 'SECRET')
